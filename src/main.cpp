@@ -1,13 +1,19 @@
+
 #include "Arduino.h"
 #include <math.h>
-#include "Adafruit_Sensor.h"
-#include <DHT.h>
-#include <DHT_U.h>
 
-int ledPin = 13;
+#include "DHT.h"
+
+#define LEDPIN 13
+#define DHTPIN 2
+#define DHTTYPE DHT11
+
+DHT dht(DHTPIN, DHTTYPE);
 
 void setup() {
-  pinMode(ledPin, OUTPUT);
+  pinMode(LEDPIN, OUTPUT);
+  pinMode(DHTPIN, INPUT);
+  dht.begin();
   Serial.begin(115200);
 }
 
@@ -19,9 +25,24 @@ void readSerial(){
 }
 
 void loop() {
-  digitalWrite(ledPin, HIGH);
-  if (Serial.available() > 0) {
-    readSerial();
+  delay(2000);
+
+  float h = dht.readHumidity();
+  float f = dht.readTemperature(true); // bool for F not C
+
+  if (isnan(h) || isnan(f)) {
+    Serial.println("fucking fail");
+    return;
   }
-  delay(1);
+
+  float hif = dht.computeHeatIndex(f, h);
+
+  Serial.print("Humidity: ");
+  Serial.print(h);
+  Serial.print(" %\t");
+  Serial.print("Temperature: ");
+  Serial.print(f);
+  Serial.print(" *F\t");
+  Serial.print(hif);
+  Serial.println(" *F");
 }
